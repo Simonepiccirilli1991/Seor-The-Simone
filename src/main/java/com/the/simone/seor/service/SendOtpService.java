@@ -1,7 +1,6 @@
 package com.the.simone.seor.service;
 
 import java.security.SecureRandom;
-import java.util.Random;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -9,6 +8,8 @@ import org.springframework.web.client.RestTemplate;
 
 import com.the.simone.seor.fragment.CacheService;
 import com.the.simone.seor.fragment.SendMailService;
+import com.the.simone.seor.model.error.OtpError;
+import com.the.simone.seor.model.request.CheckOtpRequest;
 import com.the.simone.seor.model.request.OtpMailRequest;
 import com.the.simone.seor.model.request.SendOtpRequest;
 import com.the.simone.seor.model.response.LoginResponse;
@@ -25,9 +26,9 @@ public class SendOtpService {
 
 
 
-	public SendOtpResponse sendOts(SendOtpRequest request) {
+	public SendOtpResponse sendOts(SendOtpRequest request, String username) throws OtpError{
 
-		LoginResponse response = loginService.infoUtente(request.getUsername());
+		LoginResponse response = loginService.infoUtente(username);
 		String emailInvio = request.getEmail();
 		// se mail non corrisponde mando mail a quella registrata
 		if(response.getEmail() != request.getEmail())
@@ -37,7 +38,7 @@ public class SendOtpService {
 		OtpMailRequest requestOtp = new OtpMailRequest();
 		requestOtp.setOtp(otp);
 		requestOtp.setEmail(emailInvio);
-		requestOtp.setUsername(request.getUsername());
+		requestOtp.setUsername(username);
 		String respoMail = sendMailService.invioOtsMail(requestOtp);
 		// cafonata fatta al momento poi fixo meglio mo so 14 ore che lavoro
 		boolean continuo = true;
@@ -45,18 +46,32 @@ public class SendOtpService {
 				continuo = false;
 			
 		if(!continuo) {
-			//devo mettere un eccezione mo non c'go voglia stessa storia di sopra
+			throw new OtpError();
 		}
 		// salvo dato in cache
-		//TODO fare maeglio mo so stanco pero è chiuso ciao
-		return cacheService.inserisciCache(requestOtp);
+		SendOtpResponse oResponse = new SendOtpResponse();
+		try {
+		oResponse = cacheService.inserisciCache(requestOtp);
+		}catch(Exception e) {
+			throw new OtpError();
+		}
 		
-		
-			
-			
+		return oResponse;			
 	}
 	
-	
+	// checkOtp
+	public String checkOtp(CheckOtpRequest request, String username) {
+		
+		request.setUsername(username);
+		String response = cacheService.checkOtp(request);
+		return response;
+	}
+	// cancella operazione cache
+	public String cancellaOperazione(long transactionId) {
+		String response = cacheService.cancellaCache(transactionId);
+		return response;
+		
+	}
 
 		static final String AB = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 		static SecureRandom rnd = new SecureRandom();

@@ -12,12 +12,14 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.the.simone.seor.model.Anagrafica;
+import com.the.simone.seor.model.Sicurezza;
 import com.the.simone.seor.model.request.LoginInfoRequest;
 import com.the.simone.seor.model.request.LoginRequest;
 import com.the.simone.seor.model.request.RegistraUtenteStep1Request;
 import com.the.simone.seor.model.request.RegistraUtenteStep2Request;
 import com.the.simone.seor.model.response.InserisciUtenteResponse;
 import com.the.simone.seor.model.response.LoginResponse;
+import com.the.simone.seor.service.EnforceService;
 import com.the.simone.seor.service.LoginService;
 import com.the.simone.seor.service.RegistraAnagraficaService;
 import com.the.simone.seor.service.RegistrautenteService;
@@ -33,6 +35,7 @@ public class DbController {
 	private RegistraAnagraficaService anagraficaService;
 	@Autowired
 	private LoginService loginService;
+	@Autowired private EnforceService enforceService;
 
 	// insertimento utente
 	@PostMapping("/inserisci/utente")
@@ -92,6 +95,14 @@ public class DbController {
 
 		return response;
 
+	}
+	// inserimento enforce/sicurezza
+	@PostMapping("/enforce/sic/{username}")
+	public String enforce(@PathVariable(value = "username") String username,@RequestBody Sicurezza request) {
+		
+		String response = enforceService.enforce(request, username);
+		
+		return response;
 	}
 
 
